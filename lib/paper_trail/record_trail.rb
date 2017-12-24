@@ -208,7 +208,9 @@ module PaperTrail
       @in_after_callback = true
       return unless enabled?
       versions_assoc = @record.send(@record.class.versions_association_name)
-      version = versions_assoc.create! data_for_create
+      version = versions_assoc.new
+      version.attributes = data_for_create
+      version.save!
       update_transaction_id(version)
       save_associations(version)
     ensure
@@ -234,7 +236,11 @@ module PaperTrail
 
     def record_destroy
       if enabled? && !@record.new_record?
-        version = @record.class.paper_trail.version_class.create(data_for_destroy)
+        version = @record.class.paper_trail.version_class.new
+        version.attributes = data_for_destroy
+        version.save
+
+
         if version.errors.any?
           log_version_errors(version, :destroy)
         else
@@ -272,7 +278,10 @@ module PaperTrail
       @in_after_callback = true
       if enabled? && (force || changed_notably?)
         versions_assoc = @record.send(@record.class.versions_association_name)
-        version = versions_assoc.create(data_for_update)
+        version = versions_assoc.new
+        version.attributes = data_for_update
+        version.save
+
         if version.errors.any?
           log_version_errors(version, :update)
         else
